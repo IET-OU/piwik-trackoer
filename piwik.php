@@ -75,7 +75,20 @@ if($GLOBALS['PIWIK_TRACKER_DEBUG'] === true)
 
 if(!defined('PIWIK_ENABLE_TRACKING') || PIWIK_ENABLE_TRACKING)
 {
-	$process = new Piwik_Tracker();
+//ou-specific
+	#$process = new Piwik_Tracker();
+
+	$tracker_plugin = 'AlternateImage';  # Was 'CreativeCommons'
+	$tracker_class = $tracker_plugin .'_Tracker';
+
+	require_once PIWIK_INCLUDE_PATH .
+		"/plugins/$tracker_plugin/$tracker_class.php";
+
+	if (! class_exists($tracker_class)) {
+		$tracker_class = 'Piwik_Tracker';
+	}
+	$process = new $tracker_class();
+//ou-specific ends.
 	try {
 		$process->main();
 	} catch(Exception $e) {
