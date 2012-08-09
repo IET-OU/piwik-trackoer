@@ -41,13 +41,17 @@ class Piwik_OpenLearn_Controller extends Piwik_Controller #_Admin
 		$view->content = '';
 
 		// A hard-coded Labspace/ B2S example for now!
+		$base_url = Piwik::getPiwikUrl();
+		$idsite = 2;
+		$rec = 0;
+
 		$view->cc_code = <<<EOF
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/2.0/uk/deed.en_GB"
  ><img
  alt="Creative Commons Licence"
  style="border-width:0"
  src=
-"http://localhost:8888/piwik/piwik.php?idsite=1&rec=1&img=cc:by-nc-sa&action_name=Learning+to+Learn&url=http%3A//labspace.open.ac.uk/Learning_to_Learn_1.0&urlref=http%3A//destination.example.org/path/to/34"
+"$base_url/piwik.php?idsite=$idsite&rec=$rec&img=cc:by-nc-sa&action_name=Learning+to+Learn&url=http%3A//labspace.open.ac.uk/Learning_to_Learn_1.0&urlref=http%3A//destination.example.org/path/to/34"
  /></a>
  <br />
  <span xmlns:dct="http://purl.org/dc/terms/" property="dct:title">Learning to Learn</span>
