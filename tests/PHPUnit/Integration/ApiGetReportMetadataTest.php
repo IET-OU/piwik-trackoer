@@ -32,9 +32,6 @@ class Test_Piwik_Integration_ApiGetReportMetadata extends IntegrationTestCase
             throw new PHPUnit_Framework_SkippedTestSuiteError($e->getMessage());
         }
 
-        // From Piwik 1.5, we hide Goals.getConversions and other get* methods via @ignore, but we ensure that they still work
-        // This hack allows the API proxy to let us generate example URLs for the ignored functions
-        Piwik_API_Proxy::getInstance()->hideIgnoredFunctions = false;
     }
 
     protected static function setUpWebsitesAndGoals()
@@ -45,6 +42,23 @@ class Test_Piwik_Integration_ApiGetReportMetadata extends IntegrationTestCase
         Piwik_Goals_API::getInstance()->addGoal(self::$idSite, 'triggered js', 'manually', '', '');
     }
 
+    public function setUp()
+    {
+        parent::setUp();
+
+        // From Piwik 1.5, we hide Goals.getConversions and other get* methods via @ignore, but we ensure that they still work
+        // This hack allows the API proxy to let us generate example URLs for the ignored functions
+        Piwik_API_Proxy::getInstance()->hideIgnoredFunctions = false;
+    }
+
+    public function tearDown()
+    {
+        parent::tearDown();
+
+        // reset that value after the test
+        Piwik_API_Proxy::getInstance()->hideIgnoredFunctions = true;
+    }
+
     public function getOutputPrefix()
     {
         return 'apiGetReportMetadata';
@@ -53,7 +67,17 @@ class Test_Piwik_Integration_ApiGetReportMetadata extends IntegrationTestCase
     public function getApiForTesting()
     {
         return array(
-            array('API', array('idSite' => self::$idSite, 'date' => self::$dateTime))
+            array('API', array('idSite' => self::$idSite, 'date' => self::$dateTime)),
+            
+			// test w/ hideMetricsDocs=true
+			array('API.getMetadata', array('idSite' => self::$idSite, 'date' => self::$dateTime,
+										   'apiModule' => 'Actions', 'apiAction' => 'get',
+										   'testSuffix' => '_hideMetricsDoc',
+										   'otherRequestParameters' => array('hideMetricsDoc' => 1)) ),
+			array('API.getProcessedReport', array('idSite' => self::$idSite, 'date' => self::$dateTime,
+												  'apiModule' => 'Actions', 'apiAction' => 'get',
+												  'testSuffix' => '_hideMetricsDoc',
+												  'otherRequestParameters' => array('hideMetricsDoc' => 1)) ),
         );
     }
 

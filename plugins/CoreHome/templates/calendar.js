@@ -7,11 +7,18 @@
 (function($) {
 
 Date.prototype.getWeek = function() {
-	var onejan = new Date(this.getFullYear(),0,1);
-	return Math.ceil((((this - onejan) / 86400000) + onejan.getDay())/7);
+	var onejan = new Date(this.getFullYear(),0,1), // needed for getDay()
+		
+		// use UTC times since getTime() can differ based on user's timezone
+		onejan_utc = Date.UTC(this.getFullYear(),0,1),
+		this_utc = Date.UTC(this.getFullYear(),this.getMonth(),this.getDate()),
+		
+		daysSinceYearStart = (this_utc - onejan_utc) / 86400000; // constant is millisecs in one day
+	
+	return Math.ceil((daysSinceYearStart + onejan.getDay()) / 7);
 }
 
-var currentYear, currentMonth, currentDay, currentDate;
+var currentYear, currentMonth, currentDay, currentDate, currentWeek;
 function setCurrentDate( dateStr )
 {
 	var splitDate = dateStr.split("-");
@@ -19,6 +26,7 @@ function setCurrentDate( dateStr )
 	currentMonth = splitDate[1] - 1;
 	currentDay = splitDate[2];
 	currentDate = new Date(currentYear, currentMonth, currentDay);
+	currentWeek = currentDate.getWeek();
 }
 
 setCurrentDate(piwik.currentDateString);
@@ -53,13 +61,10 @@ function isDateInCurrentPeriod( date )
 	// we don't color dates in the future
 	if( dateMonth == todayMonth
 		&& dateYear == todayYear
+		&& dateDay > todayDay
 	)
 	{
-		// we color 'today' if the selected period is 'day'. otherwise, we don't.
-		if ((selectedPeriod != 'day' && dateDay >= todayDay) || dateDay > todayDay)
-		{
-			return [true, ''];
-		}
+		return [true, ''];
 	}
 
 	// we don't color dates before the minimum date
@@ -93,7 +98,7 @@ function isDateInCurrentPeriod( date )
 		valid = true;
 	}
 	else if(piwik.period == "week"
-			&& date.getWeek() == currentDate.getWeek()
+			&& date.getWeek() == currentWeek
 			&& dateYear == currentYear
 	)
 	{
@@ -192,34 +197,24 @@ $(document).ready(function() {
 	
 	var datepickerElem = $('#datepicker').datepicker(getDatePickerOptions());
 	
-	var toggleExtraYearHighlighting = function (klass, toggle)
+	var toggleWhitespaceHighlighting = function (klass, toggleTop, toggleBottom)
 	{
 		var viewedYear = $('.ui-datepicker-year', datepickerElem).val(),
 			viewedMonth = +$('.ui-datepicker-month', datepickerElem).val(), // convert to int w/ '+'
 			firstOfViewedMonth = new Date(viewedYear, viewedMonth, 1),
 			lastOfViewedMonth = new Date(viewedYear, viewedMonth + 1, 0);
 		
-		// if no toggle is specified, then toggle based on whether the current year is selected
-		if (typeof toggle === 'undefined')
-		{
-			toggle = piwik.period == 'year' && selectedPeriod == 'year' && currentYear == viewedYear;
-		}
-		
 		// only highlight dates between piwik.minDate... & piwik.maxDate...
 		// we select the cells to highlight by checking whether the first & last of the
 		// currently viewed month are within the min/max dates.
-		var cellsToHighlight = $();
 		if (firstOfViewedMonth >= piwikMinDate)
 		{
-			cellsToHighlight = cellsToHighlight.add(
-				'tbody>tr:first-child td.ui-datepicker-other-month', datepickerElem);
+			$('tbody>tr:first-child td.ui-datepicker-other-month', datepickerElem).toggleClass(klass, toggleTop);
 		}
 		if (lastOfViewedMonth < piwikMaxDate)
 		{
-			cellsToHighlight = cellsToHighlight.add(
-				'tbody>tr:last-child td.ui-datepicker-other-month', datepickerElem);
+			$('tbody>tr:last-child td.ui-datepicker-other-month', datepickerElem).toggleClass(klass, toggleBottom);
 		}
-		cellsToHighlight.toggleClass(klass, toggle);
 	};
 	
 	// 'this' is the table cell
@@ -229,11 +224,19 @@ $(document).ready(function() {
 		{
 			case 'day':
 				// highlight this link
-				$('a', this).addClass('ui-state-hover');
+				$('a', $(this)).addClass('ui-state-hover');
 				break;
 			case 'week':
+				var row = $(this).parent();
+				
 				// highlight parent row (the week)
-				$('a', $(this).parent()).addClass('ui-state-hover');
+				$('a', row).addClass('ui-state-hover');
+				
+				// toggle whitespace if week goes into previous or next month. we check if week is on
+				// top or bottom row.
+				var toggleTop = row.is(':first-child'),
+					toggleBottom = row.is(':last-child');
+				toggleWhitespaceHighlighting('ui-state-hover', toggleTop, toggleBottom);
 				break;
 			case 'month':
 				// highlight all parent rows (the month)
@@ -242,12 +245,9 @@ $(document).ready(function() {
 			case 'year':
 				// highlight table (month + whitespace)
 				$('a', $(this).parent().parent()).addClass('ui-state-hover');
-				toggleExtraYearHighlighting('ui-state-hover', true);
+				toggleWhitespaceHighlighting('ui-state-hover', true, true);
 				break;
 		}
-		
-		// don't want to highlight 'today'
-		$('td.ui-datepicker-today a', datepickerElem).removeClass('ui-state-hover');
 	};
 	
 	var unhighlightAllDates = function ()
@@ -255,7 +255,19 @@ $(document).ready(function() {
 		// make sure nothing is highlighted 
 		$('.ui-state-active,.ui-state-hover', datepickerElem).removeClass('ui-state-active ui-state-hover');
 		
-		toggleExtraYearHighlighting('ui-datepicker-current-period');
+		// color whitespace
+		if (piwik.period == 'year')
+		{
+			var viewedYear = $('.ui-datepicker-year', datepickerElem).val(),
+				toggle = selectedPeriod == 'year' && currentYear == viewedYear;
+			toggleWhitespaceHighlighting('ui-datepicker-current-period', toggle, toggle);
+		}
+		else if (piwik.period == 'week')
+		{
+			var toggleTop = $('tr:first-child a', datepickerElem).parent().hasClass('ui-datepicker-current-period'),
+				toggleBottom = $('tr:last-child a', datepickerElem).parent().hasClass('ui-datepicker-current-period');
+			toggleWhitespaceHighlighting('ui-datepicker-current-period', toggleTop, toggleBottom);
+		}
 	};
 	
 	updateDate = function (dateText, inst)
@@ -317,6 +329,12 @@ $(document).ready(function() {
 		if ($(this).hasClass('ui-state-disabled') && selectedPeriod != 'year')
 		{
 			unhighlightAllDates();
+			
+			// if period is week, then highlight the current week
+			if (selectedPeriod == 'week')
+			{
+				highlightCurrentPeriod.call(this);
+			}
 		}
 		else
 		{
@@ -333,6 +351,25 @@ $(document).ready(function() {
 	// that fails, so we do two events, one on the table & one on thead)
 	datepickerElem.on('mouseleave', 'table', unhighlightAllDates)
 				  .on('mouseenter', 'thead', unhighlightAllDates);
+	
+	// make sure whitespace is clickable when the period makes it appropriate
+	datepickerElem.on('click', 'tbody td.ui-datepicker-other-month', function () {
+		if ($(this).hasClass('ui-state-hover'))
+		{
+			var row = $(this).parent(), tbody = row.parent();
+			
+			if (row.is(':first-child'))
+			{
+				// click on first of the month
+				$('a', tbody).first().click();
+			}
+			else
+			{
+				// click on last of month
+				$('a', tbody).last().click();
+			}
+		}
+	});
 	
 	// when non-range period is clicked, change the period & refresh the date picker
 	$("#otherPeriods input").on('click', function(e) {
