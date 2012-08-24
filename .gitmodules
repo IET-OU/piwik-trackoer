@@ -8,6 +8,6 @@
 [submodule "plugins/ContentReuse"]
 	path = plugins/ContentReuse
 	url = git@github:IET-OU/piwik-contentreuse-plugin.git
-[submodule "plugins/ExternalLink"]
+[submodule "plugins/AlternateImage"]
 	path = plugins/AlternateImage
 	url = git@github:IET-OU/piwik-alternateimage-plugin.git
