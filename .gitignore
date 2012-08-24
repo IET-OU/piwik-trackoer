@@ -1,0 +1,16 @@
+# Piwik configuration file.
+config/config.ini.php
+config/.htaccess
+
+# Piwik creates a number of files and directories.
+/tmp/
+.htaccess
+robots.txt
+
+# Miscellaneous.
+.DS_Store
+*.patch
+*.diff
+
+_scratch
+* copy*
