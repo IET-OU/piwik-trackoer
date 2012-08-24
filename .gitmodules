@@ -1,0 +1,13 @@
+#
+# .gitmodules
+#
+
+[submodule "plugins/ExternalLink"]
+	path = plugins/ExternalLink
+	url = git@github:IET-OU/piwik-externallink-plugin.git
+[submodule "plugins/ContentReuse"]
+	path = plugins/ContentReuse
+	url = git@github:IET-OU/piwik-contentreuse-plugin.git
+[submodule "plugins/ExternalLink"]
+	path = plugins/AlternateImage
+	url = git@github:IET-OU/piwik-alternateimage-plugin.git
