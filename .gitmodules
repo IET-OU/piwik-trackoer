@@ -4,10 +4,10 @@
 
 [submodule "plugins/ExternalLink"]
 	path = plugins/ExternalLink
-	url = git@github:IET-OU/piwik-externallink-plugin.git
+	url = git@github.com:IET-OU/piwik-externallink-plugin.git
 [submodule "plugins/ContentReuse"]
 	path = plugins/ContentReuse
-	url = git@github:IET-OU/piwik-contentreuse-plugin.git
+	url = git@github.com:IET-OU/piwik-contentreuse-plugin.git
 [submodule "plugins/AlternateImage"]
 	path = plugins/AlternateImage
-	url = git@github:IET-OU/piwik-alternateimage-plugin.git
+	url = git@github.com:IET-OU/piwik-alternateimage-plugin.git
